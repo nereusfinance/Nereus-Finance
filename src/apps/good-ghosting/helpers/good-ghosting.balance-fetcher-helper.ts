@@ -2,19 +2,18 @@ import { Inject, Injectable } from '@nestjs/common';
 import { sumBy, compact } from 'lodash';
 
 import { drillBalance } from '~app-toolkit';
-
-import { ContractPositionBalance } from '~position/position-balance.interface';
 import { APP_TOOLKIT, IAppToolkit } from '~app-toolkit/app-toolkit.interface';
 import {
   buildDollarDisplayItem,
   buildPercentageDisplayItem,
 } from '~app-toolkit/helpers/presentation/display-item.present';
-
-import { ContractType } from '~position/contract.interface';
 import { getAppImg } from '~app-toolkit/helpers/presentation/image.present';
-
+import { ContractType } from '~position/contract.interface';
+import { ContractPositionBalance } from '~position/position-balance.interface';
 import { isClaimable, isSupplied } from '~position/position.utils';
 import { Network } from '~types/network.interface';
+
+import { NetworkId } from '../helpers/constants';
 import { GoodGhostingGameConfigFetcherHelper } from '../helpers/good-ghosting.game.config-fetcher';
 
 @Injectable()
@@ -64,7 +63,6 @@ export class GoodGhostingBalanceFetcherHelper {
         const {
           incentiveAmount,
           interestAmount,
-          withdrawn,
           isWinner,
           paidAmount,
           rewardAmount,
@@ -79,10 +77,11 @@ export class GoodGhostingBalanceFetcherHelper {
 
         const stakedTokenBalance = drillBalance(stakedToken, paidAmountRaw.toString());
         const playerTokens = [stakedTokenBalance];
+        const rewardTokenOrIncentiveAmount = NetworkId.CeloMainnet === networkId ? incentiveAmount : rewardAmount;
 
         if (rewardToken && isWinner) {
           const rewardTokenPrecision = 10 ** rewardToken.decimals;
-          const rewardAmountRaw = rewardAmount * rewardTokenPrecision;
+          const rewardAmountRaw = rewardTokenOrIncentiveAmount * rewardTokenPrecision;
           const claimableTokenBalance = drillBalance(rewardToken, rewardAmountRaw.toString());
           playerTokens.push(claimableTokenBalance);
         }

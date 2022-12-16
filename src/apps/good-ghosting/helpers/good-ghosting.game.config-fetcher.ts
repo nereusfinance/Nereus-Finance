@@ -3,15 +3,16 @@ import axios from 'axios';
 
 import { SingleStakingFarmDefinition } from '~app-toolkit';
 import { CacheOnInterval } from '~cache/cache-on-interval.decorator';
-import { Network } from '~types';
 
 import GOOD_GHOSTING_DEFINITION from '../good-ghosting.definition';
+import { NetworkId } from '../helpers/constants';
+
 import { GamesResponse, PlayerBalance, PlayerResponse, BASE_API_URL } from './constants';
 
 @Injectable()
 export class GoodGhostingGameConfigFetcherHelper {
   @CacheOnInterval({
-    key: `studio:${GOOD_GHOSTING_DEFINITION.id}:${GOOD_GHOSTING_DEFINITION.groups.game}:${Network.POLYGON_MAINNET}:addresses`,
+    key: `studio:${GOOD_GHOSTING_DEFINITION.id}:${GOOD_GHOSTING_DEFINITION.groups.game}:addresses`,
     timeout: 15 * 60 * 1000,
   })
   async getCachedGameConfigsData() {
@@ -44,13 +45,21 @@ export class GoodGhostingGameConfigFetcherHelper {
         gameName,
       } = gameConfigs[gameContractAddress];
 
-      if (rewardTokenAddress) {
+      const isPolygonGame = NetworkId.PolygonMainnet === networkId;
+      const isCeloGame = NetworkId.CeloMainnet === networkId;
+
+      if (isPolygonGame && rewardTokenAddress) {
         rewardTokenAddresses.push(rewardTokenAddress);
         rewardTokenAddresses.push(depositTokenAddress);
       }
 
-      if (rewardTokenAddress && incentiveTokenAddress) {
+      if (isPolygonGame && rewardTokenAddress && incentiveTokenAddress) {
         rewardTokenAddresses.push(incentiveTokenAddress);
+      }
+
+      if (isCeloGame && incentiveTokenAddress) {
+        rewardTokenAddresses.push(incentiveTokenAddress);
+        rewardTokenAddresses.push(depositTokenAddress);
       }
 
       if (depositTokenAddress && contractVersion && id && networkId && networkId === networkIdParam) {
